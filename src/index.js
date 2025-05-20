@@ -146,6 +146,32 @@ fastify.delete('/cities/:cityId/recipes/:recipeId', async (request, reply) => {
   }
 });
 
+import swagger from '@fastify/swagger'
+import swaggerUI from '@fastify/swagger-ui'
+
+// Swagger JSON
+await fastify.register(swagger, {
+  exposeRoute: true,
+  routePrefix: '/json',
+  openapi: {
+    info: {
+      title: 'API MIASHS 2025',
+      description: 'Documentation API villes + recettes',
+      version: '1.0.0'
+    }
+  }
+})
+
+// Swagger UI (affiché à la racine "/")
+await fastify.register(swaggerUI, {
+  routePrefix: '/',
+  uiConfig: {
+    docExpansion: 'list',
+    deepLinking: false
+  },
+  staticCSP: true,
+  transformSpecificationClone: true
+})
 
 fastify.listen(
   {
