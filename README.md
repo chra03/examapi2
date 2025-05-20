@@ -110,8 +110,8 @@ Gérer le cas les d’erreurs suivants :
 
 ### Swagger
 
-Ajouter la documentation à l'aide de [Swaggger](https://github.com/fastify/fastify-swagger) et Swagger UI. 
-L'UI devra etre sur le root de votre domaine, et le json de Swagger sur `https://monapi.render.con/json`. Pour Swagger UI c'est donc `routePrefix: '/',`. 
+Ajouter la documentation à l'aide de [Swagger](https://github.com/fastify/fastify-swagger) et Swagger UI. 
+L'UI devra etre sur le root de votre domaine, et le json de Swagger sur `https://monapi.render.con/json`. Pour Swagger UI une des option est `routePrefix: '/',`. 
 
 ## Vérifier votre implémentation
 
