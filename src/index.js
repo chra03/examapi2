@@ -6,14 +6,12 @@ import swaggerUI from '@fastify/swagger-ui'
 
 const fastify = Fastify({ logger: true })
 
-// Base de données en mémoire
 const recipesByCity = {}
 let nextRecipeId = 1
 
-// Route GET /cities/:cityId/infos
 fastify.get('/cities/:cityId/infos', {
   schema: {
-    description: 'Retourne les informations d\'une ville',
+    description: 'Retourne les infos d’une ville',
     tags: ['Cities'],
     params: {
       type: 'object',
@@ -71,11 +69,9 @@ fastify.get('/cities/:cityId/infos', {
 
   try {
     const cityRes = await fetch(`https://api-ugi2pflmha-ew.a.run.app/cities/${cityId}/insights?apiKey=${apiKey}`)
-    if (!cityRes.ok) {
-      return reply.code(404).send({ error: 'City not found' })
-    }
-    const cityData = await cityRes.json()
+    if (!cityRes.ok) return reply.code(404).send({ error: 'City not found' })
 
+    const cityData = await cityRes.json()
     const coord = cityData.coordinates[0]
     const coordinates = [coord.latitude, coord.longitude]
     const population = cityData.population
@@ -113,7 +109,6 @@ fastify.get('/cities/:cityId/infos', {
   }
 })
 
-// Route POST /cities/:cityId/recipes
 fastify.post('/cities/:cityId/recipes', async (request, reply) => {
   const { cityId } = request.params
   const { content } = request.body
@@ -121,9 +116,7 @@ fastify.post('/cities/:cityId/recipes', async (request, reply) => {
 
   try {
     const cityRes = await fetch(`https://api-ugi2pflmha-ew.a.run.app/cities/${cityId}/insights?apiKey=${apiKey}`)
-    if (!cityRes.ok) {
-      return reply.code(404).send({ error: 'City not found' })
-    }
+    if (!cityRes.ok) return reply.code(404).send({ error: 'City not found' })
 
     if (!content || typeof content !== 'string') {
       return reply.code(400).send({ error: 'Content is required' })
@@ -135,15 +128,8 @@ fastify.post('/cities/:cityId/recipes', async (request, reply) => {
       return reply.code(400).send({ error: 'Content too long (max 2000 characters)' })
     }
 
-    const newRecipe = {
-      id: nextRecipeId++,
-      content: content
-    }
-
-    if (!recipesByCity[cityId]) {
-      recipesByCity[cityId] = []
-    }
-
+    const newRecipe = { id: nextRecipeId++, content }
+    if (!recipesByCity[cityId]) recipesByCity[cityId] = []
     recipesByCity[cityId].push(newRecipe)
 
     return reply.code(201).send(newRecipe)
@@ -153,26 +139,19 @@ fastify.post('/cities/:cityId/recipes', async (request, reply) => {
   }
 })
 
-// Route DELETE /cities/:cityId/recipes/:recipeId
 fastify.delete('/cities/:cityId/recipes/:recipeId', async (request, reply) => {
   const { cityId, recipeId } = request.params
   const apiKey = process.env.API_KEY
 
   try {
     const cityRes = await fetch(`https://api-ugi2pflmha-ew.a.run.app/cities/${cityId}/insights?apiKey=${apiKey}`)
-    if (!cityRes.ok) {
-      return reply.code(404).send({ error: 'City not found' })
-    }
+    if (!cityRes.ok) return reply.code(404).send({ error: 'City not found' })
 
     const recipes = recipesByCity[cityId]
-    if (!recipes) {
-      return reply.code(404).send({ error: 'No recipes for this city' })
-    }
+    if (!recipes) return reply.code(404).send({ error: 'No recipes for this city' })
 
     const index = recipes.findIndex(r => r.id === parseInt(recipeId))
-    if (index === -1) {
-      return reply.code(404).send({ error: 'Recipe not found' })
-    }
+    if (index === -1) return reply.code(404).send({ error: 'Recipe not found' })
 
     recipes.splice(index, 1)
     return reply.code(204).send()
@@ -182,40 +161,43 @@ fastify.delete('/cities/:cityId/recipes/:recipeId', async (request, reply) => {
   }
 })
 
-// Swagger JSON
-await fastify.register(swagger, {
-  exposeRoute: true,
-  routePrefix: '/json',
-  openapi: {
-    info: {
-      title: 'API MIASHS 2025',
-      description: 'Documentation API villes + recettes',
-      version: '1.0.0'
+// FONCTION ASYNC DE LANCEMENT
+async function main() {
+  await fastify.register(swagger, {
+    exposeRoute: true,
+    routePrefix: '/json',
+    openapi: {
+      info: {
+        title: 'API MIASHS 2025',
+        description: 'Documentation API villes + recettes',
+        version: '1.0.0'
+      }
     }
-  }
-})
+  })
 
-// Swagger UI sur "/"
-await fastify.register(swaggerUI, {
-  routePrefix: '/',
-  uiConfig: {
-    docExpansion: 'list',
-    deepLinking: false
-  },
-  staticCSP: true,
-  transformSpecificationClone: true
-})
+  await fastify.register(swaggerUI, {
+    routePrefix: '/',
+    uiConfig: {
+      docExpansion: 'list',
+      deepLinking: false
+    },
+    staticCSP: true,
+    transformSpecificationClone: true
+  })
 
-fastify.listen(
-  {
-    port: process.env.PORT || 3000,
-    host: process.env.RENDER_EXTERNAL_URL ? '0.0.0.0' : process.env.HOST || 'localhost',
-  },
-  function (err) {
-    if (err) {
-      fastify.log.error(err)
-      process.exit(1)
+  fastify.listen(
+    {
+      port: process.env.PORT || 3000,
+      host: process.env.RENDER_EXTERNAL_URL ? '0.0.0.0' : process.env.HOST || 'localhost',
+    },
+    function (err) {
+      if (err) {
+        fastify.log.error(err)
+        process.exit(1)
+      }
+      submitForReview(fastify)
     }
-    submitForReview(fastify)
-  }
-)
+  )
+}
+
+main()
